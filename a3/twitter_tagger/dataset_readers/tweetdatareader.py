@@ -45,9 +45,10 @@ class TweetDataReader(DatasetReader):
     def text_to_instance(self, words, tags=None) -> Instance:
         tokens = [Token(word) for word in words]
         token_field = TextField(tokens, self._token_indexers)
-        res = {'tokens': token_field, 'meta': MetadataField(metadata=words)}
+        res = {'tokens': token_field}
         if tags is not None:
             tags_field = SequenceLabelField(labels=tags, sequence_field=token_field)
             res['tags'] = tags_field
             pass
+        res['metadata'] = MetadataField({'words' : words})
         return Instance(res)

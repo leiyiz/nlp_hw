@@ -14,4 +14,6 @@ class TweetSimplePredictor(Predictor):
     def dump_line(self, outputs: JsonDict):
         words = outputs['words']
         tags = outputs['tags']
-        return words[0]
+        sentence = ' '.join(words)
+        tag_line = ' '.join(tags)
+        return sentence + ' ' + tag_line
