@@ -26,7 +26,6 @@ class SentimentPlaintextReader(DatasetReader):
     def _read(self, path: str):
         with open(path, 'r') as f:
             lines = f.readlines()
-
         pair = [[], []]
         for line in lines:
             words = line.strip().split()
