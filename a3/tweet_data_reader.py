@@ -10,7 +10,7 @@ from allennlp.data.tokenizers import WordTokenizer, Token
 from allennlp.data.tokenizers.tokenizer import Tokenizer
 
 
-@DatasetReader.register('twitter_tagger_pred')
+@DatasetReader.register('twitter_tagger_read')
 class SentimentPlaintextReader(DatasetReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
@@ -31,7 +31,7 @@ class SentimentPlaintextReader(DatasetReader):
         for line in lines:
             words = line.strip().split()
             if len(words) == 0:
-                instance = self.text_to_instance()
+                instance = self.text_to_instance(pair[0], pair[1])
                 yield instance
                 pair = [[], []]
                 pass

@@ -1,6 +1,6 @@
 {
     "dataset_reader": {
-        "type": "conll2003"
+        "type": "twitter_tagger_read"
     },
     "train_data_path": "data/en-ud-tweet-train.conllu",
     "validation_data_path": "data/en-ud-tweet-dev.conllu",
@@ -25,7 +25,6 @@
         "type": "basic"
     },
     "trainer": {
-        "type": "default",
         "optimizer": {
             "type": "adam"
         },
