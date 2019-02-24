@@ -11,7 +11,7 @@ from allennlp.data.tokenizers.tokenizer import Tokenizer
 
 
 @DatasetReader.register('twitter_tagger_read')
-class SentimentPlaintextReader(DatasetReader):
+class tweet_data_reader(DatasetReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
                  token_indexers: Dict[str, TokenIndexer] = None,
