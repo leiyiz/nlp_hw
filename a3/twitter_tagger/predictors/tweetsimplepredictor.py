@@ -16,4 +16,4 @@ class TweetSimplePredictor(Predictor):
         tags = outputs['tags']
         sentence = ' '.join(words)
         tag_line = ' '.join(tags)
-        return sentence + ' ' + tag_line
+        return sentence + '\t' + tag_line + '\n'
