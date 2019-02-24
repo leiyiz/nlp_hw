@@ -2,7 +2,7 @@ from typing import Dict
 from overrides import overrides
 
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.fields import TextField, SequenceLabelField
+from allennlp.data.fields import TextField, SequenceLabelField, MetadataField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer
 from allennlp.data.token_indexers.token_indexer import TokenIndexer
@@ -11,7 +11,7 @@ from allennlp.data.tokenizers.tokenizer import Tokenizer
 
 
 @DatasetReader.register('twitter_tagger_read')
-class tweet_data_reader(DatasetReader):
+class TweetDataReader(DatasetReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
                  token_indexers: Dict[str, TokenIndexer] = None,
@@ -45,7 +45,7 @@ class tweet_data_reader(DatasetReader):
     def text_to_instance(self, words, tags=None) -> Instance:
         tokens = [Token(word) for word in words]
         token_field = TextField(tokens, self._token_indexers)
-        res = {'tokens': token_field}
+        res = {'tokens': token_field, 'meta': MetadataField(metadata=words)}
         if tags is not None:
             tags_field = SequenceLabelField(labels=tags, sequence_field=token_field)
             res['tags'] = tags_field
