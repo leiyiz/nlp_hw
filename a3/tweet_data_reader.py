@@ -10,7 +10,7 @@ from allennlp.data.tokenizers import WordTokenizer, Token
 from allennlp.data.tokenizers.tokenizer import Tokenizer
 
 
-@DatasetReader.register('tweet_reader')
+@DatasetReader.register('twitter_tagger_pred')
 class SentimentPlaintextReader(DatasetReader):
     def __init__(self,
                  tokenizer: Tokenizer = None,
