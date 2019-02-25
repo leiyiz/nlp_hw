@@ -53,3 +53,5 @@ for i, j in itertools.product(range(conf_matrix.shape[0]), range(conf_matrix.sha
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
 plt.tight_layout()
+
+plt.show()
