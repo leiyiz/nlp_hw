@@ -6,20 +6,20 @@
     "validation_data_path": "data/en-ud-tweet-dev.conllu",
     "test_data_path": "data/en-ud-tweet-test.conllu",
     "model": {
-        "type": "simple_tagger",
+        "type": "crf_tagger",
         "text_field_embedder": {
             "type": "basic",
             "token_embedders": {
                 "tokens": {
                     "type": "embedding",
-                    "embedding_dim": 300
+                    "embedding_dim": 256
                 }
             }
         },
         "encoder": {
             "type": "lstm",
             "bidirectional": true,
-            "input_size": 300,
+            "input_size": 256,
             "hidden_size": 256,
             "num_layers": 1,
             "dropout": 0.2
@@ -33,7 +33,7 @@
         "optimizer": {
             "type": "adam"
         },
-        "num_epochs": 30,
+        "num_epochs": 25,
         "cuda_device": 0
     }
 }
