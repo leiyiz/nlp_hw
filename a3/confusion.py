@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
+from sklearn.metrics import confusion_matrix
 
 title = 'Confusion matrix'
 
@@ -33,12 +34,9 @@ for label in all_poss_labels:
     rec[label] = i
     i += 1
 
-confusion_matrix = np.zeros((len(all_poss_labels), len(all_poss_labels)))
-for i in range(len(true_labels)):
-    confusion_matrix[rec[true_labels[i]]][rec[pred_labels[i]]] += 1
+conf_matrix = confusion_matrix(true_labels, pred_labels)
 
-
-plt.imshow(confusion_matrix, interpolation='nearest', cmap=plt.cm.Blues)
+plt.imshow(conf_matrix, interpolation='nearest', cmap=plt.cm.Blues)
 plt.title(title)
 plt.colorbar()
 tick_marks = np.arange(len(all_poss_labels))
@@ -46,11 +44,11 @@ plt.xticks(tick_marks, all_poss_labels, rotation=45)
 plt.yticks(tick_marks, all_poss_labels)
 
 fmt = 'd'
-thresh = confusion_matrix.max() / 2.
-for i, j in itertools.product(range(confusion_matrix.shape[0]), range(confusion_matrix.shape[1])):
-    plt.text(j, i, format(confusion_matrix[i, j], fmt),
+thresh = conf_matrix.max() / 2.
+for i, j in itertools.product(range(conf_matrix.shape[0]), range(conf_matrix.shape[1])):
+    plt.text(j, i, format(conf_matrix[i, j], fmt),
              horizontalalignment="center",
-             color="white" if confusion_matrix[i, j] > thresh else "black")
+             color="white" if conf_matrix[i, j] > thresh else "black")
 
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
