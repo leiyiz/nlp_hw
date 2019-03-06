@@ -30,8 +30,9 @@ class POSTagger(Model):
     """
 
     def __init__(self, vocab: Vocabulary,
-                 text_field_embedder: TextFieldEmbedder) -> None:
-        # TODO: Add more fields to your model.
+                 text_field_embedder: TextFieldEmbedder,
+                 encoder: Seq2SeqEncoder,
+                 feedforward: Optional[FeedForward] = None) -> None:
         super().__init__(vocab)
 
         self.text_field_embedder = text_field_embedder
@@ -40,10 +41,11 @@ class POSTagger(Model):
 
         # POSTagger uses the StructuredPerceptron class.
         self.structured_perceptron = StructuredPerceptron()
-
+        self._feedforward = feedforward
         self.metrics = {
-                "accuracy": CategoricalAccuracy(),
+            "accuracy": CategoricalAccuracy(),
         }
+        self.encoder = encoder
 
     @overrides
     def forward(self,  # type: ignore
@@ -90,8 +92,31 @@ class POSTagger(Model):
             A scalar loss to be optimised. Only computed if gold label ``tags``
             are provided.
         """
-        # TODO: Implement this.
-        raise NotImplementedError
+        embedded_text_input = self.text_field_embedder(tokens)
+        # batch_size, sequence_length, _ = embedded_text_input.size()
+        mask = util.get_text_field_mask(tokens)
+        encoded_text = self.encoder(embedded_text_input, mask)
+        if self._feedforward is not None:
+            encoded_text = self._feedforward(encoded_text)
+
+        unary_potentials = self._feedforward(encoded_text)
+        binary_potentials = torch.nn.Parameter(torch.FloatTensor(self.num_tags, self.num_tags).uniform(0, 1),
+                                               requires_grad=True)
+        best_paths = self.structured_perceptron.get_tags(unary_potentials, binary_potentials, mask)
+        pred_tags = [x for x, y in best_paths]
+
+        output_dict = {"unary_potentials": unary_potentials,
+                       "binary_potentials": binary_potentials,
+                       "mask": mask,
+                       "tags": pred_tags}
+
+        if tags is not None:
+            loss = self.structured_perceptron.forward(unary_potentials, binary_potentials, tags, pred_tags, mask)
+            output_dict["loss"] = loss
+
+        if metadata is not None:
+            output_dict["words"] = [x["words"] for x in metadata]
+        return output_dict
 
     @overrides
     def decode(self, output_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -101,9 +126,9 @@ class POSTagger(Model):
         ugly nested list comprehension.
         """
         output_dict["tags"] = [
-                [self.vocab.get_token_from_index(tag, namespace=self.label_namespace)
-                 for tag in instance_tags]
-                for instance_tags in output_dict["tags"]
+            [self.vocab.get_token_from_index(tag, namespace=self.label_namespace)
+             for tag in instance_tags]
+            for instance_tags in output_dict["tags"]
         ]
 
         return output_dict
