@@ -22,8 +22,25 @@ class StructuredPerceptron(torch.nn.Module):
         Computes the score. Returns a Tensor of size [batch_size] where each
         element is the score for the sequence at that index.
         """
-        # TODO: Implement this.
-        raise NotImplementedError
+        batch_size, max_seq_length, num_tags = unary_potentials.size()
+        score = []
+        for sentence_num in range(batch_size):
+            curr_unary_potentials = unary_potentials[sentence_num]
+            curr_binary_potentials = binary_potentials[sentence_num]
+            curr_tags = tags[sentence_num]
+            curr_mask = mask[sentence_num]
+
+            prev_tag = curr_tags[0]
+            curr_score = curr_unary_potentials[0][prev_tag]
+            for i in range(1, max_seq_length):
+                if curr_mask[i] is 0:
+                    break
+                temp_tag = curr_tags[i]
+                curr_score += unary_potentials[i][temp_tag] + curr_binary_potentials[prev_tag][temp_tag]
+                prev_tag = temp_tag
+            score.append(curr_score)
+
+        return torch.tensor(score)
 
     def forward(self,
                 unary_potentials: torch.Tensor,
@@ -33,8 +50,8 @@ class StructuredPerceptron(torch.nn.Module):
                 mask: torch.ByteTensor) -> torch.Tensor:
         # pylint: disable=arguments-differ
         predicted_tags = torch.nn.utils.rnn.pad_sequence(
-                list(torch.tensor(tags) for tags in predicted_tags),
-                batch_first=True).to(self._device)
+            list(torch.tensor(tags) for tags in predicted_tags),
+            batch_first=True).to(self._device)
         gold_scores = self._score(unary_potentials, binary_potentials, tags, mask)
         pred_scores = self._score(unary_potentials, binary_potentials, predicted_tags, mask)
 
@@ -72,26 +89,26 @@ class StructuredPerceptron(torch.nn.Module):
 
         best_paths = []
         # Pad the max sequence length by 2 to account for start_tag + end_tag.
-        tag_sequence = torch.Tensor(max_seq_length + 2, num_tags + 2)
+        unary_potentials = torch.Tensor(max_seq_length + 2, num_tags + 2)
 
         for prediction, prediction_mask in zip(unary_potentials, mask):
             sequence_length = torch.sum(prediction_mask)
 
             # Start with everything totally unlikely
-            tag_sequence.fill_(-10000.)
+            unary_potentials.fill_(-10000.)
             # At timestep 0 we must have the START_TAG
-            tag_sequence[0, start_tag] = 0.
+            unary_potentials[0, start_tag] = 0.
             # At steps 1, ..., sequence_length we just use the incoming
             # prediction
-            tag_sequence[1:(sequence_length + 1), :num_tags] = \
-                    prediction[:sequence_length]
+            unary_potentials[1:(sequence_length + 1), :num_tags] = \
+                prediction[:sequence_length]
             # And at the last timestep we must have the END_TAG
-            tag_sequence[sequence_length + 1, end_tag] = 0.
+            unary_potentials[sequence_length + 1, end_tag] = 0.
 
             # We pass the tags and the transitions to ``decode``.
             path, score = \
-                    self.decode(tag_sequence[:(sequence_length + 2)],
-                                aug_binary_potentials)
+                self.decode(unary_potentials[:(sequence_length + 2)],
+                            aug_binary_potentials)
             # Get rid of START and END sentinels and append.
             path = path[1:-1]
             best_paths.append((path, score.item()))
@@ -125,5 +142,25 @@ class StructuredPerceptron(torch.nn.Module):
         score : torch.Tensor
             The score of the path.
         """
-        # TODO: Implement this.
-        raise NotImplementedError
+        sequence_len, _ = list(unary_potentials.size())
+
+        path_scores = []
+        back_pointer = []
+
+        path_scores.append(unary_potentials[0, :])
+
+        for step in range(1, sequence_len):
+            sum_potential_heart = path_scores[step - 1].unsqueeze(-1) + binary_potentials \
+                                  + unary_potentials[step, :]
+            scores, paths = torch.max(sum_potential_heart, 0)
+            # path_scores.append(unary_potentials[step, :] + scores.squeeze())
+            # TODO: try remove the squeeze() here
+            path_scores.append(scores.squeeze())
+            back_pointer.append(paths.squeeze())
+
+        score, best_path = torch.max(path_scores[-1], 0)
+        path = [int(best_path.numpy())]
+        for best_step in reversed(back_pointer):
+            path.append(int(best_step[path[-1]]))
+        path.reverse()
+        return path, score
