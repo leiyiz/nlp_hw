@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import itertools
 from sklearn.metrics import confusion_matrix
 
-title = 'Confusion matrix'
+title = 'simple Confusion matrix'
 
 if len(sys.argv) is not 2:
     print('usage: python3 confusion.py PREDICTOR_OUTPUT_FILE_PATH')
@@ -26,7 +26,7 @@ for line in true_lines:
     for label in line.split('\t')[1].strip().split():
         true_labels.append(label)
 
-all_poss_labels = set(true_labels)
+all_poss_labels = sorted(set(true_labels))
 
 rec = {}
 i = 0
