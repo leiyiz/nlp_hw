@@ -37,15 +37,23 @@ class POSTagger(Model):
 
         self.text_field_embedder = text_field_embedder
         self.label_namespace = 'labels'
-        self.num_tags = self.vocab.get_vocab_size(self.label_namespace)
+        self.num_tags = 17
+        binary_potentials = torch.nn.Parameter(torch.FloatTensor(self.num_tags, self.num_tags).uniform(0, 1),
+                                               requires_grad=True)
 
         # POSTagger uses the StructuredPerceptron class.
         self.structured_perceptron = StructuredPerceptron()
         self._feedforward = feedforward
+        self.encoder = encoder
+        if feedforward is not None:
+            output_dim = feedforward.get_output_dim()
+        else:
+            output_dim = self.encoder.get_output_dim()
+        self.tag_projection_layer = TimeDistributed(Linear(output_dim, self.num_tags))
         self.metrics = {
             "accuracy": CategoricalAccuracy(),
+            "accuracy3": CategoricalAccuracy(top_k=3)
         }
-        self.encoder = encoder
 
     @overrides
     def forward(self,  # type: ignore
@@ -93,29 +101,44 @@ class POSTagger(Model):
             are provided.
         """
         embedded_text_input = self.text_field_embedder(tokens)
-        # batch_size, sequence_length, _ = embedded_text_input.size()
+        batch_size, sequence_length, _ = embedded_text_input.size()
         mask = util.get_text_field_mask(tokens)
         encoded_text = self.encoder(embedded_text_input, mask)
+
+        # batch_size = tags.shape[0]
+        # sequence_length = mask.shape[1]
+
         if self._feedforward is not None:
             encoded_text = self._feedforward(encoded_text)
 
-        unary_potentials = self._feedforward(encoded_text)
-        binary_potentials = torch.nn.Parameter(torch.FloatTensor(self.num_tags, self.num_tags).uniform(0, 1),
-                                               requires_grad=True)
-        best_paths = self.structured_perceptron.get_tags(unary_potentials, binary_potentials, mask)
+        unary_potentials = self.tag_proj_layer(encoded_text)
+        best_paths = self.structured_perceptron.get_tags(unary_potentials, self.binary_potentials, mask)
         pred_tags = [x for x, y in best_paths]
 
         output_dict = {"unary_potentials": unary_potentials,
-                       "binary_potentials": binary_potentials,
+                       "binary_potentials": self.binary_potentials,
                        "mask": mask,
                        "tags": pred_tags}
 
         if tags is not None:
-            loss = self.structured_perceptron.forward(unary_potentials, binary_potentials, tags, pred_tags, mask)
+            # TODO: tags.squeeze(-1)
+            loss = self.structured_perceptron.forward(unary_potentials, self.binary_potentials, tags, pred_tags, mask)
+            loss = loss.to(self._device)
             output_dict["loss"] = loss
 
         if metadata is not None:
             output_dict["words"] = [x["words"] for x in metadata]
+
+        predicted_tags = [x for x, y in best_paths]
+
+        class_probabilities = torch.zeros((batch_size, sequence_length, self.num_tags)).to(self._device)
+
+        for i, instance_tags in enumerate(predicted_tags):
+            for j, tag_id in enumerate(instance_tags):
+                class_probabilities[i, j, tag_id] = 1
+
+        for metric in self.metrics.values():
+            metric(class_probabilities, tags, mask.float())
         return output_dict
 
     @overrides
