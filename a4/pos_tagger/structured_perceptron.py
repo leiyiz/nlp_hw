@@ -89,25 +89,25 @@ class StructuredPerceptron(torch.nn.Module):
 
         best_paths = []
         # Pad the max sequence length by 2 to account for start_tag + end_tag.
-        unary_potentials = torch.Tensor(max_seq_length + 2, num_tags + 2)
+        tag_sequence = torch.Tensor(max_seq_length + 2, num_tags + 2)
 
         for prediction, prediction_mask in zip(unary_potentials, mask):
             sequence_length = torch.sum(prediction_mask)
 
             # Start with everything totally unlikely
-            unary_potentials.fill_(-10000.)
+            tag_sequence.fill_(-10000.)
             # At timestep 0 we must have the START_TAG
-            unary_potentials[0, start_tag] = 0.
+            tag_sequence[0, start_tag] = 0.
             # At steps 1, ..., sequence_length we just use the incoming
             # prediction
-            unary_potentials[1:(sequence_length + 1), :num_tags] = \
+            tag_sequence[1:(sequence_length + 1), :num_tags] = \
                 prediction[:sequence_length]
             # And at the last timestep we must have the END_TAG
-            unary_potentials[sequence_length + 1, end_tag] = 0.
+            tag_sequence[sequence_length + 1, end_tag] = 0.
 
             # We pass the tags and the transitions to ``decode``.
             path, score = \
-                self.decode(unary_potentials[:(sequence_length + 2)],
+                self.decode(tag_sequence[:(sequence_length + 2)],
                             aug_binary_potentials)
             # Get rid of START and END sentinels and append.
             path = path[1:-1]
