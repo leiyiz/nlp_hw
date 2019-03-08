@@ -37,22 +37,21 @@ class POSTagger(Model):
 
         self.text_field_embedder = text_field_embedder
         self.label_namespace = 'labels'
-        self.num_tags = 17
-        binary_potentials = torch.nn.Parameter(torch.FloatTensor(self.num_tags, self.num_tags).uniform(0, 1),
-                                               requires_grad=True)
+        self.num_tags = self.vocab.get_vocab_size(self.label_namespace)
+        self.binary_potentials = torch.nn.Parameter(torch.zeros(self.num_tags, self.num_tags),requires_grad=True)
 
         # POSTagger uses the StructuredPerceptron class.
         self.structured_perceptron = StructuredPerceptron()
         self._feedforward = feedforward
+        self._device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.encoder = encoder
         if feedforward is not None:
             output_dim = feedforward.get_output_dim()
         else:
             output_dim = self.encoder.get_output_dim()
-        self.tag_projection_layer = TimeDistributed(Linear(output_dim, self.num_tags))
+        self.tag_proj_layer = TimeDistributed(Linear(output_dim, self.num_tags))
         self.metrics = {
             "accuracy": CategoricalAccuracy(),
-            "accuracy3": CategoricalAccuracy(top_k=3)
         }
 
     @overrides

@@ -23,10 +23,9 @@ class StructuredPerceptron(torch.nn.Module):
         element is the score for the sequence at that index.
         """
         batch_size, max_seq_length, num_tags = unary_potentials.size()
-        score = []
+        score = torch.zeros([batch_size])
         for sentence_num in range(batch_size):
             curr_unary_potentials = unary_potentials[sentence_num]
-            curr_binary_potentials = binary_potentials[sentence_num]
             curr_tags = tags[sentence_num]
             curr_mask = mask[sentence_num]
 
@@ -36,11 +35,11 @@ class StructuredPerceptron(torch.nn.Module):
                 if curr_mask[i] is 0:
                     break
                 temp_tag = curr_tags[i]
-                curr_score += unary_potentials[i][temp_tag] + curr_binary_potentials[prev_tag][temp_tag]
+                curr_score += curr_unary_potentials[i][temp_tag] + binary_potentials[prev_tag][temp_tag]
                 prev_tag = temp_tag
-            score.append(curr_score)
+            score[sentence_num] = curr_score
 
-        return torch.tensor(score)
+        return score.to(self._device)
 
     def forward(self,
                 unary_potentials: torch.Tensor,
