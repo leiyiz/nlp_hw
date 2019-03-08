@@ -120,7 +120,6 @@ class POSTagger(Model):
                        "tags": pred_tags}
 
         if tags is not None:
-            # TODO: tags.squeeze(-1)
             loss = self.structured_perceptron.forward(unary_potentials, self.binary_potentials, tags, pred_tags, mask)
             loss = loss.to(self._device)
             output_dict["loss"] = loss
