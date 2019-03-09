@@ -1,0 +1,1 @@
+from pos_tagger.predictors.tweetsimplepredictor import TweetSimplePredictor
