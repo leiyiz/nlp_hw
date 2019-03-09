@@ -91,7 +91,7 @@
             "bidirectional": true,
             "input_size": 1324,
             "hidden_size": 300,
-            "num_layers": 4,
+            "num_layers": 2,
             "dropout": 0.1
         }
     },
@@ -102,19 +102,19 @@
     "trainer": {
         "optimizer": {
             "type": "adagrad",
-            "lr" : 0.001,
+            "lr" : 0.01,
             "weight_decay" : 0.001
             // "patience": 12
             // "momentum" : 0.1
         },
-        "num_epochs": 20,
+        "num_epochs": 30,
         "cuda_device": 0,
         "num_serialized_models_to_keep" : 0,
         "validation_metric" : "+accuracy",
         "learning_rate_scheduler" : {
             "type" : "reduce_on_plateau",
             "factor" : 0.3,
-            "patience" : 4
+            "patience" : 6
         }
     }
 }

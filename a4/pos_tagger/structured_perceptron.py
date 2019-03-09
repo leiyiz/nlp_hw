@@ -33,8 +33,6 @@ class StructuredPerceptron(torch.nn.Module):
             prev_tag = curr_tags[0]
             curr_score = curr_unary_potentials[0][prev_tag]
             for i in range(1, max_seq_length):
-                if curr_mask[i] is 0:
-                    break
                 temp_tag = curr_tags[i]
                 curr_score += curr_unary_potentials[i][temp_tag] + binary_potentials[prev_tag][temp_tag]
                 prev_tag = temp_tag

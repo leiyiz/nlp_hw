@@ -47,9 +47,10 @@ class POSTagger(Model):
         self.encoder = encoder
         if feedforward is not None:
             output_dim = feedforward.get_output_dim()
+            self.tag_proj_layer = TimeDistributed(Linear(output_dim, self.num_tags))
         else:
             output_dim = self.encoder.get_output_dim()
-        self.tag_proj_layer = TimeDistributed(Linear(output_dim, self.num_tags))
+            self.tag_proj_layer = TimeDistributed(Linear(output_dim, self.num_tags))
         self.metrics = {
             "accuracy": CategoricalAccuracy(),
         }
@@ -124,19 +125,18 @@ class POSTagger(Model):
             loss = loss.to(self._device)
             output_dict["loss"] = loss
 
+            class_probabilities = torch.zeros((batch_size, sequence_length, self.num_tags)).to(self._device)
+
+            for i, instance_tags in enumerate(pred_tags):
+                for j, tag_id in enumerate(instance_tags):
+                    class_probabilities[i, j, tag_id] = 1
+
+            for metric in self.metrics.values():
+                metric(class_probabilities, tags, mask.float())
+
         if metadata is not None:
             output_dict["words"] = [x["words"] for x in metadata]
 
-        predicted_tags = [x for x, y in best_paths]
-
-        class_probabilities = torch.zeros((batch_size, sequence_length, self.num_tags)).to(self._device)
-
-        for i, instance_tags in enumerate(predicted_tags):
-            for j, tag_id in enumerate(instance_tags):
-                class_probabilities[i, j, tag_id] = 1
-
-        for metric in self.metrics.values():
-            metric(class_probabilities, tags, mask.float())
         return output_dict
 
     @overrides
