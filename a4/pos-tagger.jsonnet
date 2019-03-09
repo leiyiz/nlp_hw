@@ -157,7 +157,7 @@
 //         },
 //         "encoder": {
 //             "type": "alternating_lstm",
-//             "input_size": 1624,
+//             "input_size": 1324,
 //             "hidden_size": 300,
 //             "num_layers": 8,
 //             "recurrent_dropout_probability": 0.1,
