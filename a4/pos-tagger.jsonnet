@@ -92,7 +92,7 @@
             "input_size": 1324,
             "hidden_size": 150,
             "num_layers": 2,
-            "dropout": 0.5
+            "dropout": 0.2
         }
     },
     "iterator": {
