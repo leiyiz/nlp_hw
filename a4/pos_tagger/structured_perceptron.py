@@ -34,7 +34,7 @@ class StructuredPerceptron(torch.nn.Module):
             curr_score = curr_unary_potentials[0][prev_tag]
             for i in range(1, max_seq_length):
                 temp_tag = curr_tags[i]
-                curr_score += curr_unary_potentials[i][temp_tag] + binary_potentials[prev_tag][temp_tag]
+                curr_score = curr_score + curr_unary_potentials[i][temp_tag] + binary_potentials[prev_tag][temp_tag]
                 prev_tag = temp_tag
             score[sentence_num] = curr_score
             sentence_num += 1
