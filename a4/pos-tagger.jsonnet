@@ -90,9 +90,9 @@
             "type": "lstm",
             "bidirectional": true,
             "input_size": 1324,
-            "hidden_size": 150,
+            "hidden_size": 100,
             "num_layers": 2,
-            "dropout": 0.2
+            // "dropout": 0.2
         }
     },
     "iterator": {
