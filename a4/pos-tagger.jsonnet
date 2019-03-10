@@ -91,8 +91,8 @@
             "bidirectional": true,
             "input_size": 1324,
             "hidden_size": 150,
-            "num_layers": 1,
-            "dropout": 0.2
+            "num_layers": 2,
+            "dropout": 0.5
         }
     },
     "iterator": {
@@ -107,13 +107,15 @@
             // "patience": 12
             // "momentum" : 0.1
         },
-        "num_epochs": 20,
+        "patience": 15,
+        "num_epochs": 100,
         "cuda_device": 0,
         "num_serialized_models_to_keep" : 0,
         "validation_metric" : "+accuracy",
-        "learning_rate_scheduler": {
-            "type": "reduce_on_plateau",
-            "patience": 4
+        "learning_rate_scheduler" : {
+            "type" : "reduce_on_plateau",
+            "factor": 0.3,
+            "patience" : 7
         }
     }
 }
