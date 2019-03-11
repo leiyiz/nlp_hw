@@ -159,7 +159,7 @@
         "encoder": {
             "type": "alternating_lstm",
             "input_size": 1324,
-            "hidden_size": 256,
+            "hidden_size": 200,
             "num_layers": 3,
             "recurrent_dropout_probability": 0.2,
             "use_highway": true
